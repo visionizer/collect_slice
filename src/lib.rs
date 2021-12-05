@@ -1,3 +1,7 @@
+#![no_std]
+use core::iter::Iterator;
+use core::marker::Sized;
+
 //! Collect an iterator into a slice.
 //!
 //! Rust comes with the `Iterator::collect` method for collecting an iterator's items into
@@ -168,155 +172,11 @@ pub trait CollectSlice: Iterator {
     }
 }
 
-impl<I: ?Sized> CollectSlice for I where I: Iterator {
+impl<I: ?core::marker::Sized> CollectSlice for I where I: core::iter::Iterator {
     fn collect_slice(&mut self, slice: &mut [Self::Item]) -> usize {
         slice.iter_mut().zip(self).fold(0, |count, (dest, item)| {
             *dest = item;
             count + 1
         })
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_basic() {
-        let mut buf = [0; 5];
-
-        let count = (0..5).map(|i| {
-            i + 1
-        }).collect_slice(&mut buf[..]);
-
-        assert_eq!(count, 5);
-        assert_eq!(buf, [1, 2, 3, 4, 5]);
-    }
-
-    #[test]
-    fn test_under() {
-        let mut buf = [0; 5];
-
-        let count = (0..3).map(|i| {
-            i + 1
-        }).collect_slice(&mut buf[1..]);
-
-        assert_eq!(count, 3);
-        assert_eq!(buf, [0, 1, 2, 3, 0]);
-    }
-
-    #[test]
-    fn test_over() {
-        let mut buf = [0; 3];
-
-        let mut iter = (0..5).map(|i| {
-            i + 1
-        });
-
-        let count = iter.collect_slice(&mut buf[..]);
-
-        assert_eq!(count, 3);
-        assert_eq!(buf, [1, 2, 3]);
-
-        assert_eq!(iter.next().unwrap(), 4);
-        assert_eq!(iter.next().unwrap(), 5);
-    }
-
-    #[test]
-    fn test_checked() {
-        let mut buf = [0; 5];
-
-        (0..5).map(|i| {
-            i + 1
-        }).collect_slice_checked(&mut buf[..]);
-
-        assert_eq!(buf, [1, 2, 3, 4, 5]);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_checked_under() {
-        let mut buf = [0; 5];
-
-        (0..3).map(|i| {
-            i + 1
-        }).collect_slice_checked(&mut buf[..]);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_checked_over() {
-        let mut buf = [0; 3];
-
-        (0..5).map(|i| {
-            i + 1
-        }).collect_slice_checked(&mut buf[..]);
-    }
-
-    #[test]
-    fn test_exhaust() {
-        let mut buf = [0; 5];
-
-        (0..3).map(|i| {
-            i + 1
-        }).collect_slice_exhaust(&mut buf[..]);
-
-        assert_eq!(buf, [1, 2, 3, 0, 0]);
-
-        (0..5).map(|i| {
-            i + 1
-        }).collect_slice_exhaust(&mut buf[..]);
-
-        assert_eq!(buf, [1, 2, 3, 4, 5]);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_exhaust_over() {
-        let mut buf = [0; 5];
-
-        (0..7).map(|i| {
-            i + 1
-        }).collect_slice_exhaust(&mut buf[..]);
-    }
-
-    #[test]
-    fn test_filled() {
-        let mut buf = [0; 5];
-
-        (0..5).map(|i| {
-            i + 1
-        }).collect_slice_fill(&mut buf[..]);
-
-        assert_eq!(buf, [1, 2, 3, 4, 5]);
-
-        (50..100).map(|i| {
-            i + 1
-        }).collect_slice_fill(&mut buf[..]);
-
-        assert_eq!(buf, [51, 52, 53, 54, 55]);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_filled_under() {
-        let mut buf = [0; 5];
-
-        (0..3).map(|i| {
-            i + 1
-        }).collect_slice_fill(&mut buf[..]);
-    }
-
-    #[test]
-    fn test_unsized() {
-        let mut buf = [0; 5];
-
-        let it: &mut Iterator<Item=_> = &mut (0..5).map(|i| {
-            i + 1
-        });
-        let count = <Iterator<Item=_> as CollectSlice>::collect_slice(it, &mut buf[..]);
-
-        assert_eq!(count, 5);
-        assert_eq!(buf, [1, 2, 3, 4, 5]);
     }
 }
