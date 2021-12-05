@@ -6,5 +6,5 @@ authors = ["Mick Koch <mick@kochm.co>"]
 readme = "README.md"
 license = "MIT"
 
-edition = 2021
+edition = "2021"
 
